@@ -5,7 +5,7 @@ const pontuacao = document.querySelector(".score--value");
 const pontuacaoFinal = document.querySelector(".final-score > span");
 const menu = document.querySelector(".menu-screen");
 const botaoJogar = document.querySelector(".btn-play");
-const audio = new Audio("../assets/audio.mp3");
+const audio = new Audio("./assets/audio.mp3");
 
 // Configurações iniciais
 const tamanho = 30;
