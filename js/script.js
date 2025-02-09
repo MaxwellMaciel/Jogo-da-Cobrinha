@@ -1,184 +1,184 @@
 // Seleção de elementos do DOM
-const canvas = document.querySelector("canvas");
-const ctx = canvas.getContext("2d");
-const score = document.querySelector(".score--value");
-const finalScore = document.querySelector(".final-score > span");
+const tela = document.querySelector("canvas");
+const contexto = tela.getContext("2d");
+const pontuacao = document.querySelector(".score--value");
+const pontuacaoFinal = document.querySelector(".final-score > span");
 const menu = document.querySelector(".menu-screen");
-const buttonPlay = document.querySelector(".btn-play");
+const botaoJogar = document.querySelector(".btn-play");
 const audio = new Audio("../assets/audio.mp3");
 
 // Configurações iniciais
-const size = 30;
-const initialPosition = { x: 270, y: 240 };
-let snake = [initialPosition];
-let direction;
-let loopId;
-let speed = 300;
-let scoreMultiplier = 1;
-let boostActive = false;
+const tamanho = 30;
+const posicaoInicial = { x: 270, y: 240 };
+let cobra = [posicaoInicial];
+let direcao;
+let idLoop;
+let velocidade = 300;
+let multiplicadorDePontuacao = 1;
+let aumentoAtivo = false;
 
 // Funções utilitárias
-const incrementScore = () => {
-    score.innerText = +score.innerText + (10 * scoreMultiplier);
-    checkBoost();
+const incrementarPontuacao = () => {
+    pontuacao.innerText = +pontuacao.innerText + (10 * multiplicadorDePontuacao);
+    verificarAumento();
 };
 
-const randomNumber = (min, max) => {
+const numeroAleatorio = (min, max) => {
     return Math.round(Math.random() * (max - min) + min);
 };
 
-const randomPosition = () => {
-    const number = randomNumber(0, canvas.width - size);
-    return Math.round(number / size) * size;
+const posicaoAleatoria = () => {
+    const numero = numeroAleatorio(0, tela.width - tamanho);
+    return Math.round(numero / tamanho) * tamanho;
 };
 
-const randomColor = () => {
-    return `rgb(${randomNumber(0, 255)}, ${randomNumber(0, 255)}, ${randomNumber(0, 255)})`;
+const corAleatoria = () => {
+    return `rgb(${numeroAleatorio(0, 255)}, ${numeroAleatorio(0, 255)}, ${numeroAleatorio(0, 255)})`;
 };
 
 // Configuração da comida
-const food = {
-    x: randomPosition(),
-    y: randomPosition(),
-    color: randomColor(),
+const comida = {
+    x: posicaoAleatoria(),
+    y: posicaoAleatoria(),
+    cor: corAleatoria(),
 };
 
 // Funções de desenho
-const drawGrid = () => {
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = "#191919";
+const desenharGrade = () => {
+    contexto.lineWidth = 1;
+    contexto.strokeStyle = "#191919";
 
-    for (let i = size; i < canvas.width; i += size) {
-        ctx.beginPath();
-        ctx.moveTo(i, 0);
-        ctx.lineTo(i, canvas.height);
-        ctx.stroke();
+    for (let i = tamanho; i < tela.width; i += tamanho) {
+        contexto.beginPath();
+        contexto.moveTo(i, 0);
+        contexto.lineTo(i, tela.height);
+        contexto.stroke();
 
-        ctx.beginPath();
-        ctx.moveTo(0, i);
-        ctx.lineTo(canvas.width, i);
-        ctx.stroke();
+        contexto.beginPath();
+        contexto.moveTo(0, i);
+        contexto.lineTo(tela.width, i);
+        contexto.stroke();
     }
 };
 
-const drawFood = () => {
-    ctx.shadowColor = food.color;
-    ctx.shadowBlur = 6;
-    ctx.fillStyle = food.color;
-    ctx.fillRect(food.x, food.y, size, size);
-    ctx.shadowBlur = 0;
+const desenharComida = () => {
+    contexto.shadowColor = comida.cor;
+    contexto.shadowBlur = 6;
+    contexto.fillStyle = comida.cor;
+    contexto.fillRect(comida.x, comida.y, tamanho, tamanho);
+    contexto.shadowBlur = 0;
 };
 
-const drawSnake = () => {
-    snake.forEach((position, index) => {
-        ctx.fillStyle = index === snake.length - 1 ? "white" : boostActive ? "#4caf50" : "#ddd";
-        ctx.shadowBlur = boostActive ? 10 : 0;
-        ctx.fillRect(position.x, position.y, size, size);
+const desenharCobra = () => {
+    cobra.forEach((posicao, indice) => {
+        contexto.fillStyle = indice === cobra.length - 1 ? "white" : aumentoAtivo ? "#4caf50" : "#ddd";
+        contexto.shadowBlur = aumentoAtivo ? 10 : 0;
+        contexto.fillRect(posicao.x, posicao.y, tamanho, tamanho);
     });
 };
 
 // Movimentação e lógica do jogo
-const moveSnake = () => {
-    if (!direction) return;
+const moverCobra = () => {
+    if (!direcao) return;
 
-    const head = snake[snake.length - 1];
-    let newHead;
+    const cabeca = cobra[cobra.length - 1];
+    let novaCabeca;
 
-    switch (direction) {
-        case "right": newHead = { x: head.x + size, y: head.y }; break;
-        case "left": newHead = { x: head.x - size, y: head.y }; break;
-        case "down": newHead = { x: head.x, y: head.y + size }; break;
-        case "up": newHead = { x: head.x, y: head.y - size }; break;
+    switch (direcao) {
+        case "direita": novaCabeca = { x: cabeca.x + tamanho, y: cabeca.y }; break;
+        case "esquerda": novaCabeca = { x: cabeca.x - tamanho, y: cabeca.y }; break;
+        case "baixo": novaCabeca = { x: cabeca.x, y: cabeca.y + tamanho }; break;
+        case "cima": novaCabeca = { x: cabeca.x, y: cabeca.y - tamanho }; break;
     }
 
-    snake.push(newHead);
-    snake.shift();
+    cobra.push(novaCabeca);
+    cobra.shift();
 };
 
-const checkEat = () => {
-    const head = snake[snake.length - 1];
+const verificarComer = () => {
+    const cabeca = cobra[cobra.length - 1];
 
-    if (head.x === food.x && head.y === food.y) {
-        incrementScore();
-        snake.push(head);
+    if (cabeca.x === comida.x && cabeca.y === comida.y) {
+        incrementarPontuacao();
+        cobra.push(cabeca);
         audio.play();
 
         do {
-            food.x = randomPosition();
-            food.y = randomPosition();
-        } while (snake.some(position => position.x === food.x && position.y === food.y));
+            comida.x = posicaoAleatoria();
+            comida.y = posicaoAleatoria();
+        } while (cobra.some(posicao => posicao.x === comida.x && posicao.y === comida.y));
 
-        food.color = randomColor();
+        comida.cor = corAleatoria();
     }
 };
 
-const checkCollision = () => {
-    const head = snake[snake.length - 1];
-    const canvasLimit = canvas.width - size;
-    const neckIndex = snake.length - 2;
+const verificarColisao = () => {
+    const cabeca = cobra[cobra.length - 1];
+    const limiteTela = tela.width - tamanho;
+    const indicePescoço = cobra.length - 2;
 
-    const wallCollision = head.x < 0 || head.x > canvasLimit || head.y < 0 || head.y > canvasLimit;
-    const selfCollision = snake.some((position, index) => index < neckIndex && position.x === head.x && position.y === head.y);
+    const colisaoComParede = cabeca.x < 0 || cabeca.x > limiteTela || cabeca.y < 0 || cabeca.y > limiteTela;
+    const colisaoComPropriaCobra = cobra.some((posicao, indice) => indice < indicePescoço && posicao.x === cabeca.x && posicao.y === cabeca.y);
 
-    if (wallCollision || selfCollision) {
+    if (colisaoComParede || colisaoComPropriaCobra) {
         gameOver();
     }
 };
 
-const checkBoost = () => {
-    if (!boostActive && +score.innerText % 50 === 0 && +score.innerText > 0) {
-        activateBoost();
+const verificarAumento = () => {
+    if (!aumentoAtivo && +pontuacao.innerText % 50 === 0 && +pontuacao.innerText > 0) {
+        ativarAumento();
     }
 };
 
-const activateBoost = () => {
-    boostActive = true;
-    speed /= 2;
-    scoreMultiplier = 2;
+const ativarAumento = () => {
+    aumentoAtivo = true;
+    velocidade /= 2;
+    multiplicadorDePontuacao = 2;
     setTimeout(() => {
-        boostActive = false;
-        speed *= 2;
-        scoreMultiplier = 1;
+        aumentoAtivo = false;
+        velocidade *= 2;
+        multiplicadorDePontuacao = 1;
     }, 5000);
 };
 
 const gameOver = () => {
-    direction = undefined;
+    direcao = undefined;
     menu.style.display = "flex";
-    finalScore.innerText = score.innerText;
-    canvas.style.filter = "blur(2px)";
+    pontuacaoFinal.innerText = pontuacao.innerText;
+    tela.style.filter = "blur(2px)";
 };
 
-const gameLoop = () => {
-    clearInterval(loopId);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawGrid();
-    drawFood();
-    moveSnake();
-    drawSnake();
-    checkEat();
-    checkCollision();
+const loopDeJogo = () => {
+    clearInterval(idLoop);
+    contexto.clearRect(0, 0, tela.width, tela.height);
+    desenharGrade();
+    desenharComida();
+    moverCobra();
+    desenharCobra();
+    verificarComer();
+    verificarColisao();
 
-    loopId = setTimeout(gameLoop, speed);
+    idLoop = setTimeout(loopDeJogo, velocidade);
 };
 
-gameLoop();
+loopDeJogo();
 
 // Eventos de controle
 document.addEventListener("keydown", ({ key }) => {
-    if (key === "ArrowRight" && direction !== "left") direction = "right";
-    if (key === "ArrowLeft" && direction !== "right") direction = "left";
-    if (key === "ArrowDown" && direction !== "up") direction = "down";
-    if (key === "ArrowUp" && direction !== "down") direction = "up";
+    if (key === "ArrowRight" && direcao !== "esquerda") direcao = "direita";
+    if (key === "ArrowLeft" && direcao !== "direita") direcao = "esquerda";
+    if (key === "ArrowDown" && direcao !== "cima") direcao = "baixo";
+    if (key === "ArrowUp" && direcao !== "baixo") direcao = "cima";
 });
 
-buttonPlay.addEventListener("click", () => {
-    score.innerText = "00";
+botaoJogar.addEventListener("click", () => {
+    pontuacao.innerText = "00";
     menu.style.display = "none";
-    canvas.style.filter = "none";
-    snake = [initialPosition];
-    direction = undefined;
-    speed = 300;
-    scoreMultiplier = 1;
-    boostActive = false;
+    tela.style.filter = "none";
+    cobra = [posicaoInicial];
+    direcao = undefined;
+    velocidade = 300;
+    multiplicadorDePontuacao = 1;
+    aumentoAtivo = false;
 });
